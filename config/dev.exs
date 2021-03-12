@@ -67,7 +67,7 @@ config :phoenix, :plug_init_mode, :runtime
 
 config :libcluster,
   topologies: [
-    example: [
+    local: [
       strategy: Auction.LocalEpmd,
     ]
   ]

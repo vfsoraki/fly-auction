@@ -1,4 +1,10 @@
 defmodule Auction.LocalEpmd do
+  @moduledoc """
+  A strategy to automatically connect all nodes
+  connected to local epmd.
+
+  Taken from https://github.com/bitwalker/libcluster/issues/124
+  """
   use Cluster.Strategy
 
   alias Cluster.Strategy.State
