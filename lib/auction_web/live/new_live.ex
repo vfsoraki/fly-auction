@@ -10,7 +10,7 @@ defmodule AuctionWeb.NewLive do
     {:ok,
      assign(
        socket,
-       id: random_id(),
+       id: (if connected?(socket), do: random_id(), else: nil),
        desc: "",
        # can be ready, live, finished
        state: :ready,
