@@ -23,6 +23,7 @@ defmodule AuctionWeb.NewLive do
   def handle_event("create", %{"desc" => desc}, socket) do
     if socket.assigns.state == :ready do
       Registry.register(R, id_to_key(socket.assigns.id), {:live, desc})
+      PubSub.subscribe(P, "auctions")
       {:noreply, assign(socket, started: true, desc: desc, state: :live)}
     else
       {:noreply, socket}
@@ -95,6 +96,21 @@ defmodule AuctionWeb.NewLive do
     else
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_info({:match, pid, q}, socket) do
+    IO.inspect({pid, q})
+    if String.contains?(socket.assigns.desc, q) do
+      send pid, {
+        :match,
+        socket.assigns.id,
+        socket.assigns.desc,
+        length(socket.assigns.participants)
+      }
+    end
+
+    {:noreply, socket}
   end
 
   defp id_to_key(id), do: "auction:#{id}"

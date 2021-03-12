@@ -1,0 +1,65 @@
+<section class="phx-hero">
+  <h1>Welcome!</h1>
+  <p>Here you can connect to an ongoing auction using its ID</p>
+
+  <form phx-submit="search">
+    <%= if @pid do %>
+      <input type="text" name="name" value="<%= @name %>" disabled readonly>
+      <input type="text" name="q" value="<%= @id %>" disabled readonly>
+    <% else %>
+      <input type="text" name="name" value="<%= @name %>" placeholder="Your name" autocomplete="off">
+      <input type="text" name="q" value="<%= @id %>" placeholder="Auction ID" autocomplete="off">
+      <button type="submit">Connect</button>
+    <% end %>
+  </form>
+
+  <hr>
+
+  <%= if @pid do %>
+    <p>Auction creator note:</p>
+    <textarea cols="30" id="desc" rows="10" disabled readonly><%= @desc %></textarea>
+
+    <%= if @state == :live do %>
+      <p>You can suggest your price here</p>
+      <form phx-submit="suggest">
+        <input type="number" name="value" value="<%= @value %>" autocomplete="off">
+        <button type="submit">Suggest</button>
+      </form>
+    <% else %>
+      <%= if @won do %>
+        <p>
+          Yay! You won the auction!
+          You can see a list of participants below.
+        </p>
+      <% else %>
+        <p>
+          Auction is finished and you did not win.
+          You can see a list of participants below.
+        </p>
+      <% end %>
+    <% end %>
+
+    <hr/>
+
+    <p>Connected to auction <strong><%= @id %></strong>.</p>
+
+    <p>A list of price suggestions can be found here</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Suggested price</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for {_pid, name, value} <- @participants do %>
+          <tr>
+            <td><%= name %></td>
+            <td>$<%= value %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>
