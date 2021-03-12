@@ -42,7 +42,8 @@ defmodule Auction.MixProject do
       {:telemetry_poller, "~> 0.4"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:libcluster, "~> 3.2"}
+      {:libcluster, "~> 3.2"},
+      {:horde, "~> 0.8"}
     ]
   end
 

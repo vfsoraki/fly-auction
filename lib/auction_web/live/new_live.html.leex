@@ -1,0 +1,55 @@
+<section class="phx-hero">
+  <h1>Welcome!</h1>
+  <p>
+    Here you can create an auction.
+    This is your auction ID, give it to people
+    to let them join.
+  </p>
+
+  <form phx-submit="create">
+    <input type="text" name="id" id="id" value="<%= @id %>" readonly disabled>
+    <%= if @state == :ready do %>
+      <textarea cols="30" id="desc" name="desc" rows="10" placeholder="Write some description here"><%= @desc %></textarea>
+      <button type="submit">Start auction</button>
+    <% else %>
+      <textarea cols="30" id="desc" rows="10" disabled readonly><%= @desc %></textarea>
+    <% end %>
+  </form>
+
+  <%= unless @state == :ready do %>
+    <%= if @state == :live do %>
+      <h2>Nice, auction <strong><%= @id %></strong> is live now.</h2>
+      <p>You can give your ID to other people to join you.</p>
+      <hr>
+
+      <p>A list of participants' suggested values can be seen here</p>
+      <p>Once you're done, click here to announce winner.</p>
+      <button phx-click="finish">End auction</button>
+    <% else %>
+      <p>Auction is finished. Winner is marked in below list.</p>
+    <% end %>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Suggested price</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for {pid, name, value} <- @participants do %>
+          <tr>
+            <td>
+              <%= if @state == :finished && @winner == pid do %>
+                <span class="winner"><%= name %></span>
+              <% else %>
+                <%= name %>
+              <% end %>
+            </td>
+            <td>$<%= value %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>

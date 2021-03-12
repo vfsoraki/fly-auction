@@ -11,7 +11,10 @@ defmodule Auction.Application do
     children = [
       # Start the Telemetry supervisor
       AuctionWeb.Telemetry,
+      # Automatic clustering
       {Cluster.Supervisor, [topologies, [name: Auction.ClusterSupervisor]]},
+      # Distributed KV store
+      {Auction.Registry, []},
       # Start the PubSub system
       {Phoenix.PubSub, name: Auction.PubSub},
       # Start the Endpoint (http/https)

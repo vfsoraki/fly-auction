@@ -17,7 +17,8 @@ defmodule AuctionWeb.Router do
   scope "/", AuctionWeb do
     pipe_through :browser
 
-    live "/", PageLive, :index
+    live "/", SearchLive, :index
+    live "/new", NewLive, :index
   end
 
   # Other scopes may use custom stacks.
