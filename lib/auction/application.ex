@@ -6,13 +6,16 @@ defmodule Auction.Application do
   use Application
 
   def start(_type, _args) do
+    topologies = Application.get_env(:libcluster, :topologies)
+
     children = [
       # Start the Telemetry supervisor
       AuctionWeb.Telemetry,
+      {Cluster.Supervisor, [topologies, [name: Auction.ClusterSupervisor]]},
       # Start the PubSub system
       {Phoenix.PubSub, name: Auction.PubSub},
       # Start the Endpoint (http/https)
-      AuctionWeb.Endpoint
+      AuctionWeb.Endpoint,
       # Start a worker by calling: Auction.Worker.start_link(arg)
       # {Auction.Worker, arg}
     ]
