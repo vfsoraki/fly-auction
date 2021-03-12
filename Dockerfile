@@ -31,7 +31,7 @@ RUN MIX_ENV=prod mix phx.digest
 # compile and build release
 COPY lib lib
 # uncomment COPY if rel/ exists
-# COPY rel rel
+COPY rel rel
 RUN MIX_ENV=prod mix release
 
 # prepare release image
