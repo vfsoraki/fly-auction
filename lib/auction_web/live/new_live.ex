@@ -10,19 +10,22 @@ defmodule AuctionWeb.NewLive do
     {:ok,
      assign(
        socket,
-       id: (if connected?(socket), do: random_id(), else: nil),
+       id: if(connected?(socket), do: random_id(), else: nil),
        desc: "",
        # can be ready, live, finished
        state: :ready,
        winner: nil,
-       participants: []
+       participants: [],
+       monitors: %{}
      )}
   end
 
   @impl true
   def handle_event("create", %{"desc" => desc}, socket) do
     if socket.assigns.state == :ready do
+      # For direct connection
       Registry.register(R, id_to_key(socket.assigns.id), {:live, desc})
+      # For search
       PubSub.subscribe(P, "auctions")
       {:noreply, assign(socket, started: true, desc: desc, state: :live)}
     else
@@ -59,20 +62,57 @@ defmodule AuctionWeb.NewLive do
   @impl true
   def handle_info({:new, pid, name}, socket) do
     if socket.assigns.state == :live do
+      # Add this new participant
       participants =
         [{pid, name, "0"} | socket.assigns.participants]
         |> sort_participants()
 
+      # Tell everybody we have a new participant
       PubSub.broadcast(
         P,
         id_to_key(socket.assigns.id),
         {:participants, participants}
       )
 
-      {:noreply, assign(socket, participants: participants)}
+      # Monitor participant, in case they leave
+      ref = :erlang.monitor(:process, pid)
+      monitors = Map.put(socket.assigns.monitors, ref, pid)
+
+      {:noreply, assign(socket, participants: participants, monitors: monitors)}
     else
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_info(
+        {:DOWN, ref, :process, _pid, _},
+        %{assigns: %{monitors: monitors, participants: participants}} = socket
+      ) do
+    # Remove them from participants
+    {pid, monitors} = Map.pop(monitors, ref)
+
+    participants =
+      participants
+      |> Enum.filter(fn
+        {^pid, _, _} -> false
+        _ -> true
+      end)
+      |> sort_participants()
+
+    # Tell everybody participant has left
+    PubSub.broadcast(
+      P,
+      id_to_key(socket.assigns.id),
+      {:participants, participants}
+    )
+
+    socket =
+      socket
+      |> assign(monitors: monitors)
+      |> assign(participants: participants)
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -101,13 +141,17 @@ defmodule AuctionWeb.NewLive do
   @impl true
   def handle_info({:match, pid, q}, socket) do
     IO.inspect({pid, q})
-    if String.contains?(socket.assigns.desc, q) do
-      send pid, {
+
+    desc = String.downcase(socket.assigns.desc)
+    q = String.downcase(q)
+
+    if String.contains?(desc, q) do
+      send(pid, {
         :match,
         socket.assigns.id,
         socket.assigns.desc,
         length(socket.assigns.participants)
-      }
+      })
     end
 
     {:noreply, socket}
@@ -118,7 +162,12 @@ defmodule AuctionWeb.NewLive do
   def sort_participants(p) do
     Enum.sort_by(
       p,
-      fn {_, _, v} -> v |> Float.parse() |> elem(0) end,
+      fn {_, _, v} ->
+        case Float.parse(v) do
+          :error -> 0
+          {float, _r} -> float
+        end
+      end,
       &>=/2
     )
   end
